@@ -1,15 +1,15 @@
-const Employee=require("../models/employee")
-module.exports = function(req, res, next) {
-    if (req.session.employeeId) {
-      Employee.findById(req.session.employeeId)
-        .then(function(employee) {
-          req.employee = employee;
-          next();
-        })
-        .catch(function(err) {
-        console.log(err.message);
-          res.redirect("/");
-        });
-    } else res.redirect("/");
-  };
-  
+module.exports = {
+  ensureAuthenticated: function(req, res, next) {
+    if (req.isAuthenticated()) {
+      return next();
+    }
+    req.flash('error_msg', 'Please log in to view that resource');
+    res.redirect('/users/login');
+  },
+  forwardAuthenticated: function(req, res, next) {
+    if (!req.isAuthenticated()) {
+      return next();
+    }
+    res.redirect('/dashboard');      
+  }
+};

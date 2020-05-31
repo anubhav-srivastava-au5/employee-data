@@ -1,34 +1,52 @@
-const mongoose = require('mongoose')
-const config = require('../db')
-const bcrypt = require('bcryptjs')
 
-const empSchema = mongoose.Schema({
-    name:{
-        type:String,
-        required:true
-    },
-    email:{
-        type:String,
-        required:true,
-        unique: true,
-        match:/^([0-9a-zA-Z]([-\.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/
-    },
-    password:{
-        type:String,
-        required:true
-    },
-    contactNo:{
-        type:Number,
-        required:true
-    },
-    joiningDateTime:{
-        type:String,
-        required:true
-    },
-    leavingDateTime:{
-        type:String,
-        required:true
-    }
-});
+const mongoose = require("mongoose")
+const marked = require('marked')
+const slugify = require("slugify")
+const createDomPurify = require('dompurify')
+const { JSDOM } = require('jsdom')
+const dompurify = createDomPurify(new JSDOM().window)
 
-const Emp = module.exports = mongoose.model('Emp',empSchema);
+const employeeSchema = new mongoose.Schema({
+  title:{
+    type:String,
+    require:true
+  },
+  description:{
+    type:String
+  },
+  markdown:{
+    type:String,
+    required:true
+  },
+  createdAt:{
+    type:Date,
+    default:Date.now
+  },
+  slug:{
+    type:String,
+    require:true,
+    unique:true
+  },
+  
+  sanitizedHtml: {
+    type: String,
+    required: true
+  }
+
+})
+
+employeeSchema.pre('validate', function(next){
+  if(this.title){
+    this.slug = slugify(this.title, {lower:true,strict:true})
+  }
+  if (this.markdown) {
+    this.sanitizedHtml = dompurify.sanitize(marked(this.markdown))
+  }
+
+  next()
+})
+
+
+
+
+module.exports = mongoose.model('Employee',employeeSchema)
